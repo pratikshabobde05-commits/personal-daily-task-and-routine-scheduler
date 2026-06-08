@@ -1,0 +1,161 @@
+<!-- index.html - Enhanced with Authentication & Dashboard -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title> Personal Task & Routine Scheduler</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <div class="glass-bg"></div>
+  
+  <!-- AUTH MODAL (Login/Register) -->
+  <div id="authModal" class="modal" style="display: flex;">
+    <div class="modal-content auth-content glass-card">
+      <div class="auth-header">
+        <i class="fas fa-seedling"></i>
+        <h2>Your Space</h2>
+        <p>Your productivity companion</p>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="register">Register</button>
+      </div>
+      
+      <!-- Login Form -->
+      <form id="loginForm" class="auth-form active">
+        <input type="text" id="loginUsername" placeholder="Username" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button type="submit" class="btn-primary">Login</button>
+      </form>
+      
+      <!-- Register Form -->
+      <form id="registerForm" class="auth-form">
+        <input type="text" id="regUsername" placeholder="Username" required>
+        <input type="email" id="regEmail" placeholder="Email" required>
+        <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required>
+        <input type="password" id="regConfirmPassword" placeholder="Confirm Password" required>
+        <button type="submit" class="btn-primary">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP (Hidden until login) -->
+  <div id="mainApp" style="display: none;">
+    <div class="app-container">
+      <!-- Header -->
+      <header class="dashboard-header">
+        <div class="logo-area">
+          <i class="fas fa-seedling"></i>
+          <h1>ZenFlow</h1>
+        </div>
+        <div class="header-actions">
+          <span id="userGreeting" class="user-greeting"></span>
+          <button id="themeToggleBtn" class="icon-btn"><i class="fas fa-moon"></i></button>
+          <button id="dashboardViewBtn" class="icon-btn" title="Dashboard View"><i class="fas fa-chart-line"></i></button>
+          <button id="exportJsonBtn" class="icon-btn" title="Export data"><i class="fas fa-download"></i></button>
+          <label for="importInput" class="icon-btn" title="Import data"><i class="fas fa-upload"></i></label>
+          <input type="file" id="importInput" accept=".json" style="display: none;">
+          <button id="logoutBtn" class="icon-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+      </header>
+
+      <!-- Live Date & Quote -->
+      <div class="live-strip">
+        <div class="datetime-box">
+          <span id="currentDate"></span> &nbsp;|&nbsp; <span id="liveClock"></span>
+        </div>
+        <div class="quote-box">
+          <i class="fas fa-quote-left"></i> <span id="motivationalQuote">Stay focused, one task at a time.</span>
+        </div>
+      </div>
+
+      <!-- Dashboard Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card"><i class="fas fa-list-check"></i><span id="totalTasks">0</span><p>Total Tasks</p></div>
+        <div class="stat-card"><i class="fas fa-check-circle"></i><span id="completedTasks">0</span><p>Completed</p></div>
+        <div class="stat-card"><i class="fas fa-hourglass-half"></i><span id="pendingTasks">0</span><p>Pending</p></div>
+        <div class="stat-card"><i class="fas fa-calendar-day"></i><span id="todayTasksCount">0</span><p>Today's Tasks</p></div>
+        <div class="stat-card"><i class="fas fa-tasks"></i><span id="overdueTasks">0</span><p>Overdue</p></div>
+        <div class="stat-card"><i class="fas fa-chart-simple"></i><span id="productivityScore">0</span><p>Productivity %</p></div>
+      </div>
+
+      <!-- Progress & Streak -->
+      <div class="progress-streak">
+        <div class="progress-container">
+          <div class="progress-label"><span>Overall Completion</span><span id="completionPercent">0%</span></div>
+          <div class="progress-bar-bg"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        </div>
+        <div class="streak-card"><i class="fas fa-fire"></i> <span id="streakCount">0</span> day streak</div>
+        <div class="streak-card"><i class="fas fa-trophy"></i> <span id="totalCompleted">0</span> tasks done</div>
+      </div>
+
+      <!-- Dashboard View (Charts & Analytics) -->
+      <div id="dashboardView" class="dashboard-view" style="display: none;">
+        <div class="charts-container">
+          <div class="chart-card">
+            <h3>Task Distribution by Category</h3>
+            <canvas id="categoryChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Priority Breakdown</h3>
+            <canvas id="priorityChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Weekly Progress</h3>
+            <canvas id="weeklyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Two Columns -->
+      <div class="main-dashboard" id="mainDashboard">
+        <!-- LEFT: TASK MANAGER -->
+        <div class="task-panel">
+          <div class="panel-header">
+            <h2><i class="fas fa-tasks"></i> Tasks</h2>
+            <button id="quickTaskBtn" class="btn-primary-sm"><i class="fas fa-plus"></i> Quick add</button>
+          </div>
+          
+          <!-- Filters -->
+          <div class="filters-bar">
+            <div class="search-wrapper"><i class="fas fa-search"></i><input type="text" id="taskSearch" placeholder="Search tasks..."></div>
+            <select id="filterCategory"><option value="all">All Categories</option><option value="Study">Study</option><option value="Personal">Personal</option><option value="Work">Work</option><option value="Health">Health</option><option value="Other">Other</option></select>
+            <select id="filterPriority"><option value="all">All Priority</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select>
+            <select id="filterStatus"><option value="all">All Status</option><option value="pending">Pending</option><option value="completed">Completed</option></select>
+            <select id="sortTasks"><option value="dateAsc">Due Date (earliest)</option><option value="dateDesc">Due Date (latest)</option><option value="priorityHigh">Priority (High→Low)</option></select>
+          </div>
+          
+          <div class="task-list" id="taskListContainer"></div>
+        </div>
+
+        <!-- RIGHT: ROUTINE SCHEDULER + CALENDAR -->
+        <div class="routine-panel">
+          <div class="panel-header">
+            <h2><i class="fas fa-clock"></i> Daily Routine</h2>
+            <button id="addRoutineSlotBtn" class="btn-primary-sm"><i class="fas fa-plus"></i> Add slot</button>
+          </div>
+          <div class="timeline-view" id="timelineView"></div>
+          <div class="calendar-widget">
+            <div class="cal-header"><i class="fas fa-calendar-alt"></i> Calendar</div>
+            <div id="miniCalendar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div id="taskModal" class="modal"><div class="modal-content glass-card"><span class="close-modal">&times;</span><h3 id="modalTitle">Add New Task</h3><input type="text" id="taskTitle" placeholder="Task title"><select id="taskCategory"><option value="Study">Study</option><option value="Personal">Personal</option><option value="Work">Work</option><option value="Health">Health</option><option value="Other">Other</option></select><select id="taskPriority"><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select><input type="datetime-local" id="taskDueDate"><div class="modal-buttons"><button id="saveTaskBtn" class="btn-primary">Save Task</button><button id="cancelModalBtn" class="btn-secondary">Cancel</button></div></div></div>
+  
+  <div id="routineModal" class="modal"><div class="modal-content glass-card"><span class="close-routine-modal">&times;</span><h3>Add Routine Activity</h3><input type="text" id="routineTitle" placeholder="Activity"><select id="routineSection"><option value="Morning">Morning</option><option value="Afternoon">Afternoon</option><option value="Evening">Evening</option><option value="Night">Night</option></select><input type="time" id="routineTime" value="09:00"><div class="modal-buttons"><button id="saveRoutineBtn" class="btn-primary">Add</button><button id="cancelRoutineBtn" class="btn-secondary">Cancel</button></div></div></div>
+
+  <div id="toastMsg" class="toast"></div>
+  <script src="script.js"></script>
+</body>
+</html>
